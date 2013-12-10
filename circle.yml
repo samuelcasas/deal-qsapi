@@ -1,0 +1,13 @@
+machine:
+  timezone:
+    America/Los_Angeles
+  php:
+    version: 5.4.15
+
+dependencies:
+  override:
+    - composer install --prefer-source --no-interaction
+
+test:
+  override:
+    - phpunit --configuration tests/config/phpunit.ci.xml
