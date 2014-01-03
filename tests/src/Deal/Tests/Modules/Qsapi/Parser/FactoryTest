@@ -1,0 +1,85 @@
+<?php
+
+namespace Deal\Tests\Modules\Qsapi\Parser;
+
+use Deal\Modules\Qsapi\Parser\Factory;
+use Deal\Modules\Qsapi\Engine;
+use Deal\Modules\Qsapi\Exporter;
+
+/**
+ * Tests of the parser factory
+ */
+class FactoryTest extends \PHPUnit_Framework_TestCase
+{
+
+    public function testCreateWithEmptyParamsUsesDefaultEngineAndExporter()
+    {
+        $parser = Factory::create();   
+        $this->assertInstanceOf('Deal\Modules\Qsapi\Parser\ParserInterface', $parser);
+        $this->assertInstanceOf('Deal\Modules\Qsapi\Engine\PhpStrParse', $parser->getEngine());
+        $this->assertInstanceOf('Deal\Modules\Qsapi\Exporter\Identity', $parser->getExporter());
+    }
+    
+    public function testCreateWithEngineInstanceUsesThatInstance()
+    {
+        $engine = new Engine\PhpStrParse();
+        $parser = Factory::create(array(
+            'engine' => array(
+                'instance' => $engine,
+            ),
+        ));
+        $this->assertSame($engine, $parser->getEngine());
+    }
+
+    public function testCreateWithExporterInstanceUsesThatInstance()
+    {
+        $exporter = new Exporter\Identity();
+        $parser = Factory::create(array(
+            'exporter' => array(
+                'instance' => $exporter,
+            ),
+        ));
+        $this->assertSame($exporter, $parser->getExporter());
+    }
+    
+    public function testCreateWithEngineClassCreatesInstance()
+    {
+        $parser = Factory::create(array(
+            'engine' => array(
+                'class' => 'Deal\Modules\Qsapi\Engine\PhpParseStr',            
+            ),
+        ));
+        $this->assertInstanceOf('Deal\Modules\Qsapi\Engine\PhpParseStr', $parser->getEngine());
+    }
+
+    public function testCreateWithExporterClassCreatesInstance()
+    {
+        $parser = Factory::create(array(
+            'exporter' => array(
+                'class' => 'Deal\Modules\Qsapi\Exporter\Identity',
+            ),
+        ));
+        $this->assertInstanceOf('Deal\Modules\Qsapi\Exporter\Identity', $parser->getExporter());
+    }
+    
+    public function dpTestCreateWithValidKeyButMissingInstanceOrClassThrowsException()
+    {
+        return array(
+            array('engine'),
+            array('exporter'),
+        );
+    }
+    
+    /**
+     * @dataProvider dpTestCreateWithValidKeyButMissingInstanceOrClassThrowsException
+     * @expectedException \RuntimeException
+     */
+    public function testCreateWithValidKeyButMissingInstanceOrClassThrowsException($key)
+    {
+        $parser = Factory::create(array(
+            $key => array(
+                'irrelevantKey' => 'irrelevant value',
+            ),
+        ));
+    }
+}

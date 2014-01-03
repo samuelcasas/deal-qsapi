@@ -1,0 +1,34 @@
+<phpunit bootstrap="../bootstrap.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         stopOnFailure="false"
+         processIsolation="false"
+         verbose="true"
+         backupGlobals="false"
+         backupStaticAttributes="false">
+
+    <testsuites>
+
+        <testsuite name="Deal - QSAPI">
+
+            <!-- common tests -->
+            <directory>../src</directory>
+
+        </testsuite>
+
+    </testsuites>
+
+    <filter>
+        <blacklist>
+            <directory suffix=".php">../../vendor</directory>
+        </blacklist>
+    </filter>
+    
+    <logging>
+        <log type="coverage-html" target="../log/codeCoverage" charset="UTF-8" yui="true" highlight="true" lowUpperBound="50" highLowerBound="80"/>
+        <log type="testdox-html" target="../log/testdox.html" />
+    </logging>
+    
+</phpunit>
