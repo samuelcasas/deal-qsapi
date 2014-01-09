@@ -1,6 +1,8 @@
 Deal-QSAPI
 ==========
 
+test
+
 Deal-QSAPI is a PHP-based query-string parser package for API's that allows a client to specify:
 
 * filter conditions
