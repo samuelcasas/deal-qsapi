@@ -289,4 +289,24 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
        $this->assertArrayHasKey('limit', $result);
        $this->assertNull($result['limit']);        
     }
+    
+    public function testDistinctCountValid()
+    {
+       $engine = $this->getMockedEngine();
+       $result = $engine->parse('count_distinct=myfield');
+
+       $this->assertInternalType('array', $result);
+       $this->assertArrayHasKey('count_distinct', $result);
+       $this->assertEquals('myfield', $result['count_distinct']);
+    }
+    
+    public function testDistinctCountMissingReturnsFalse()
+    {
+       $engine = $this->getMockedEngine();
+       $result = $engine->parse('some_irrelevant_thing=myfield');
+
+       $this->assertInternalType('array', $result);
+       $this->assertArrayHasKey('count_distinct', $result);
+       $this->assertFalse($result['count_distinct']);        
+    }
 }

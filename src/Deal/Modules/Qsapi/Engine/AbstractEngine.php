@@ -55,6 +55,7 @@ abstract class AbstractEngine implements EngineInterface
        $result['order'] = $this->parseOrder($arr);
        $result['limit'] = $this->parseLimit($arr);
        $result['page'] = $this->parsePage($arr);
+       $result['count_distinct'] = $this->parseCountDistinct($arr);
        
        $this->result = $result;
     }
@@ -177,5 +178,17 @@ abstract class AbstractEngine implements EngineInterface
             throw new EngineException(sprintf('%s must be positive', ucfirst($field)));
         }
         return $value;        
+    }
+    
+    protected function parseCountDistinct($arr)
+    {
+        if (!array_key_exists('count_distinct', $arr)) {
+            return false;
+        }
+        $countDistinct = $arr['count_distinct'];
+        if (!is_string($countDistinct)) {
+            throw new EngineException('count_distinct should be a single field name');
+        }
+        return $countDistinct;        
     }
 }
