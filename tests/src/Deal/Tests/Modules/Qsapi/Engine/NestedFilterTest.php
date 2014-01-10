@@ -3,13 +3,13 @@
 namespace Deal\Tests\Modules\Qsapi\Engine;
 
 use Deal\Modules\Qsapi\Engine;
+use Deal\Tests\Modules\Qsapi\BaseTest;
 
 /**
  * Tests for the NestedFilter engine
  */
-class NestedFilterTest extends \PHPUnit_Framework_TestCase
+class NestedFilterTest extends BaseTest
 {
-
     /**
      * @var Engine\NestedFilter 
      */
@@ -20,61 +20,194 @@ class NestedFilterTest extends \PHPUnit_Framework_TestCase
         $this->engine = new Engine\NestedFilter();
     }
     
-    public function testSimpleEqualityOnSingleField()
-    {
-        $result = $this->engine->parse('filter[myfield]=myvalue');
-        $this->assertInternalType('array', $result);
-        $this->assertArrayHasKey('filter', $result);
-        $this->assertEquals(array(
-            'myfield' => array(
-                'value' => 'myvalue',
-                'operator' => 'eq',
-            ),
-        ), $result['filter']);
-    }
     
-    public function testSimpleEqualityOnMultipleFields()
+    public function dpTestValidFilters()
     {
-        $result = $this->engine->parse('filter[myfield1]=myvalue1&filter[myfield2]=myvalue2');
-        $this->assertInternalType('array', $result);
-        $this->assertArrayHasKey('filter', $result);
-        $this->assertEquals(array(
-            'myfield1' => array(
-                'value' => 'myvalue1',
-                'operator' => 'eq',
+        return array(
+          
+            // ===================
+            array(
+                'Blank',
+                '',
+                null,
             ),
-            'myfield2' => array(
-                'value' => 'myvalue2',
-                'operator' => 'eq',
+
+            // ===================
+            array(
+                'Null',
+                null,
+                null,
             ),
-        ), $result['filter']);
+
+            // ===================
+            array(
+                'Single field, equality',
+                'filter[myfield]=myvalue',
+                array(
+                    'myfield' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue',
+                                'operator' => 'eq',
+                            ),
+                        )                        
+                    ),
+                ),
+            ),
+            
+            // ===================
+            array(
+                'Multiple fields, equality',
+                'filter[myfield1]=myvalue1&filter[myfield2]=myvalue2',
+                array(
+                    'myfield1' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue1',
+                                'operator' => 'eq',
+                            ),                            
+                        ),
+                    ),
+                    'myfield2' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue2',
+                                'operator' => 'eq',
+                            ),                            
+                        ),
+                    ),
+                ),
+            ),
+            
+            // ===================
+            array(
+                'Single field, AND',
+                'filter[myfield1]=myvalue1,myvalue2',
+                array(
+                    'myfield1' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue1',
+                                'operator' => 'eq',
+                            ),                                                        
+                            array(
+                                'value' => 'myvalue2',
+                                'operator' => 'eq',
+                            ),                                                        
+                        ),
+                    ),
+                ),
+            ),
+            
+            // ===================
+            array(
+                'Single field, OR',
+                'filter[myfield1]=myvalue1|myvalue2',
+                array(
+                    'myfield1' => array(
+                        '$or' => array(
+                            array(
+                                'value' => 'myvalue1',
+                                'operator' => 'eq',
+                            ),                                                        
+                            array(
+                                'value' => 'myvalue2',
+                                'operator' => 'eq',
+                            ),                                                        
+                        ),
+                    ),
+                ),
+            ),
+            
+            // ===================
+            array(
+                'Single field, non-equality operator',
+                'filter[myfield1][gte]=myvalue',
+                array(
+                    'myfield1' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue',
+                                'operator' => 'gte',
+                            ),                                                        
+                        ),
+                    ),
+                ),
+            ),
+            
+            // ===================
+            array(
+                'Single field, multiple non-equality operators',
+                'filter[myfield][lte]=myvalue1&filter[myfield][gte]=myvalue2',
+                array(
+                    'myfield' => array(
+                        '$and' => array(
+                            array(
+                                'value' => 'myvalue1',
+                                'operator' => 'lte',
+                            ),                                                        
+                            array(
+                                'value' => 'myvalue2',
+                                'operator' => 'gte',
+                            ),                                                        
+                        ),
+                    ),
+                ),
+            ),
+            
+        );
     }
-    
-    public function dpTestIntegerIndexedArrayThrowsException()
+
+    /**
+     * @dataProvider dpTestValidFilters
+     * @param string $desc
+     * @param string $qs
+     * @param null|array $expectedResult
+     */
+    public function testValidFilters($desc, $qs, $expectedResult)
+    {
+        $result = $this->engine->parse($qs);
+        $val = $this->performDrilldownAssertionsAndReturn($result, 'filter');
+        $this->assertEquals($expectedResult, $val, $desc);        
+    }
+        
+    public function dpTestBadFormatsThrowException()
     {
         return array(
             array('filter=myfield:myvalue'),
             array('filter[]=myfield:myvalue'),
-
-            // for now, this is unimplemented, so expect an exception
-            array('filter[myfield][gt]=2000'),
+            array('filter[myfield]=,myvalue'),
+            array('filter[myfield]=myvalue,'),
+            array('filter[myfield]=myvalue|'),
+            array('filter[myfield]=|myvalue'),
+            array('filter[myfield]=myvalue1|myvalue2,myvalue3'),
+            array('filter[myfield]=myvalue1,myvalue2|myvalue3'),
+            array('filter[myfield][badoperator]=myvalue1'),
         );
     }
     
     /**
-     * @dataProvider dpTestIntegerIndexedArrayThrowsException
+     * @dataProvider dpTestBadFormatsThrowException
      * @expectedException Deal\Modules\Qsapi\Engine\EngineException
      */
-    public function testIntegerIndexedArrayThrowsException($qs)
+    public function testBadFormatsThrowException($qs)
     {
         $result = $this->engine->parse($qs);
     }
     
-    public function testNoFiltersReturnsNull()
+    public function testAndWithNoOperators()
     {
-        $result = $this->engine->parse();
-        $this->assertInternalType('array', $result);
-        $this->assertArrayHasKey('filter', $result);
-        $this->assertNull($result['filter']);
+        $result = $this->engine->parse('filter[myfield]=val1,val2');
+        $and = $this->performDrilldownAssertionsAndReturn($result, 'filter.myfield.$and');
+        $this->assertEquals(array(
+            array(
+                'value' => 'val1',
+                'operator' => 'eq',
+            ),
+            array(
+                'value' => 'val2',
+                'operator' => 'eq',
+            ),
+        ), $and);
     }
 }
