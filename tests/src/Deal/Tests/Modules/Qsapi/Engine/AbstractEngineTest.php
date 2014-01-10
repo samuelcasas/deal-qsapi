@@ -2,10 +2,12 @@
 
 namespace Deal\Tests\Modules\Qsapi\Engine;
 
+use Deal\Tests\Modules\Qsapi\BaseTest;
+
 /**
  * Test for the AbstractEngine
  */
-class AbstractEngineTest extends \PHPUnit_Framework_TestCase
+class AbstractEngineTest extends BaseTest
 {
    
    protected function getMockedEngine()
@@ -22,20 +24,16 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
    {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('fields=f1,f2,f3');
-      
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('fields', $result);
-       $this->assertEquals(array('f1', 'f2', 'f3'), $result['fields']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'fields');
+       $this->assertEquals(array('f1', 'f2', 'f3'), $val);
     }
     
     public function testFieldsEmptyReturnNull()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('');
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('fields', $result);
-       $this->assertNull($result['fields']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'fields');
+       $this->assertNull($val);        
     }
 
     /**
@@ -50,21 +48,17 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
    public function testExcludeNonEmptyReturnsCorrectArray()
    {
        $engine = $this->getMockedEngine();
-       $result = $engine->parse('exclude=f1,f2,f3');
-      
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('exclude', $result);
-       $this->assertEquals(array('f1', 'f2', 'f3'), $result['exclude']);
+       $result = $engine->parse('exclude=f1,f2,f3');    
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'exclude');
+       $this->assertEquals(array('f1', 'f2', 'f3'), $val);
     }
     
     public function testExcludeEmptyReturnsNull()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('');
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('exclude', $result);
-       $this->assertNull($result['exclude']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'exclude');
+       $this->assertNull($val);
     }
 
     /**
@@ -80,12 +74,10 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('');
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('order', $result);
-       $this->assertNull($result['order']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'order');
+       $this->assertNull($val);
     }
-        
+    
     public function dpTestOrderExceptions()
     {
         return array(
@@ -135,23 +127,19 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('order=myfield:' . $dir);
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('order', $result);
-       $this->assertArrayHasKey('myfield', $result['order']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'order');
+       $this->assertArrayHasKey('myfield', $val);
     }
     
     public function testCompoundOrder()
     {
        $engine = $this->getMockedEngine();
-       $result = $engine->parse('order=myfield1:asc,myfield2:desc');
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('order', $result);
+       $result = $engine->parse('order=myfield1:asc,myfield2:desc');       
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'order');
        $this->assertEquals(array(
            'myfield1' => 'asc',
            'myfield2' => 'desc',
-       ), $result['order']);
+       ), $val);
     }
     
     public function dpTestCanonicalDirection()
@@ -175,11 +163,8 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('order=myfield:' . $qsDir);
-       
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('order', $result);
-       $this->assertArrayHasKey('myfield', $result['order']);
-       $this->assertEquals($expectedDir, $result['order']['myfield']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'order.myfield');
+       $this->assertEquals($expectedDir, $val);
     }
     
     public function dpTestPageWithInvalidValueThrowsException()
@@ -220,20 +205,16 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('page=' . $page);
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('page', $result);
-       $this->assertEquals($page, $result['page']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'page');
+       $this->assertEquals($page, $val);
     }
 
     public function testEmptyPageReturnsNull()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse();
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('page', $result);
-       $this->assertNull($result['page']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'page');
+       $this->assertNull($val);
     }
 
     public function dpTestLimitWithInvalidValueThrowsException()
@@ -274,39 +255,31 @@ class AbstractEngineTest extends \PHPUnit_Framework_TestCase
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('limit=' . $limit);
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('limit', $result);
-       $this->assertEquals($limit, $result['limit']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'limit');
+       $this->assertEquals($limit, $val);
     }
     
     public function testEmptyLimitReturnsNull()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse();
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('limit', $result);
-       $this->assertNull($result['limit']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'limit');
+       $this->assertNull($val);
     }
     
     public function testDistinctCountValid()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('count_distinct=myfield');
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('count_distinct', $result);
-       $this->assertEquals('myfield', $result['count_distinct']);
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'count_distinct');
+       $this->assertEquals('myfield', $val);
     }
     
     public function testDistinctCountMissingReturnsFalse()
     {
        $engine = $this->getMockedEngine();
        $result = $engine->parse('some_irrelevant_thing=myfield');
-
-       $this->assertInternalType('array', $result);
-       $this->assertArrayHasKey('count_distinct', $result);
-       $this->assertFalse($result['count_distinct']);        
+       $val = $this->performDrilldownAssertionsAndReturn($result, 'count_distinct');
+       $this->assertFalse($val);
     }
 }
