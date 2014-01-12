@@ -15,7 +15,7 @@ interface ExporterInterface
      * 
      * @see Deal\Modules\Qsapi\Parser\Parser
      * @param array $qsArray
-     * @return array
+     * @return array|mixed
      */
     public function export(array $qsArray);
 }

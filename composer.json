@@ -21,10 +21,16 @@
     "require": {
         "php" : ">=5.3.0"
     },
+    "require-dev": {
+        "monga/monga": "dev-master"
+    },
+    "suggest" : {
+        "monga/monga": "dev-master"        
+    },
     "autoload": {
         "psr-0": { 
             "Deal\\Modules\\Qsapi" : "src",
-            "Deal\\Test\\Modules\\Qsapi" : "tests"
+            "Deal\\Tests\\Modules\\Qsapi" : "tests/src"
         }
     },
     "minimum-stability": "dev"
