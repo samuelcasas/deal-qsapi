@@ -10,7 +10,7 @@ use Monga\Query\Find;
  *
  * @author David Weinraub <david.weinraub@dws.la.>
  */
-class Monga implements ExporterInterface
+class MongaCallback implements ExporterInterface
 {
 
     /**

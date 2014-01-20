@@ -4,18 +4,17 @@ namespace Deal\Tests\Modules\Qsapi\Exporter;
 
 use Deal\Modules\Qsapi\Exporter;
 use Deal\Tests\Modules\Qsapi\BaseTest;
-use Monga\Query;
 
 /**
- * Tests for the Monga Exporter
+ * Tests for the MongoArrays Exporter
  *
  * @author David Weinraub <david.weinraub@dws.la.>
  */
-class MongaTest extends BaseTest
+class MongoArrayTest extends BaseTest
 {
     /**
      *
-     * @var Exporter\Monga
+     * @var Exporter\MongaCallback
      */
     protected $exporter;
     
@@ -35,52 +34,7 @@ class MongaTest extends BaseTest
     
     public function setUp()
     {
-        $this->exporter = new Exporter\Monga(10);
-    }
-    
-    /**
-     * A utulity method ripped from the Monga\Query\Find tests for inspecting
-     * the value of a Find object.
-     * 
-     * @param string $property
-     * @return mixed
-     */
-    protected function getProperty($find, $property)
-    {
-        $reflection = new \ReflectionObject($find);
-        $property = $reflection->getProperty($property);
-        $property->setAccessible(true);
-        return $property->getValue($find);
-    }
-    
-    /**
-     * Utility function to apply closure to query
-     * 
-     * @param Closure $closure
-     * @param \Monga\Query\Find $query
-     * @return \Monga\Query\Find
-     */
-    protected function applyClosureToQuery($closure, Query\Find $query = null)
-    {
-        return $query;
-    }
-
-    /**
-     * Utility method to facilitate testing
-     * 
-     * @param array $original
-     * @param \Monga\Query\Find $query
-     * @return \Monga\Query
-     */
-    protected function exportAndApplyClosureToQuery($original, Query\Find $query = null)
-    {
-        if (!$query) {
-            $query = new Query\Find();
-        }
-        $result = $this->exporter->export($original);
-        $closure = $result['queryClosure'];
-        $closure($query);
-        return $query;
+        $this->exporter = new Exporter\MongoArray(10);
     }
     
     public function dpTestOrderSingleField()
@@ -97,8 +51,8 @@ class MongaTest extends BaseTest
             'limit' => 10,
             'page'  => 3,
         ));
-        $query = $this->exportAndApplyClosureToQuery($original);
-        $actual = $this->getProperty($query, 'skip');
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'skip');
         $this->assertEquals(20, $actual);
     }
 
@@ -107,8 +61,8 @@ class MongaTest extends BaseTest
         $original = array_merge($this->emptyParseResult, array(
             'limit' => 20,
         ));
-        $query = $this->exportAndApplyClosureToQuery($original);
-        $actual = $this->getProperty($query, 'limit');
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'limit');
         $this->assertEquals(20, $actual);
     }
 
@@ -122,11 +76,11 @@ class MongaTest extends BaseTest
                'myfield' => $originalDirection,
             ),
         ));
-        $query = $this->exportAndApplyClosureToQuery($original);
         $expected = array(
             'myfield' => $expectedDirection,
         );
-        $actual = $this->getProperty($query, 'orderBy');
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'sort');
         $this->assertEquals($expected, $actual);
     }
     
@@ -138,12 +92,12 @@ class MongaTest extends BaseTest
                'myfield2' => 'asc',
             ),
         ));
-        $query = $this->exportAndApplyClosureToQuery($original);
         $expected = array(
             'myfield1' => -1,
             'myfield2' => 1,
         );
-        $actual = $this->getProperty($query, 'orderBy');
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'sort');
         $this->assertEquals($expected, $actual);        
     }
     
@@ -161,11 +115,19 @@ class MongaTest extends BaseTest
                 ),
             ),
         ));        
-        $query = $this->exportAndApplyClosureToQuery($original);
         $expected = array(
-                'myfield' => 'myvalue',
+            '$and' => array(
+                array(
+                    '$and' => array(
+                        array(
+                            'myfield' => 'myvalue',
+                         ),
+                    ),
+                ),
+            ),
         );
-        $actual = $query->getWhere();        
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'filter');
         $this->assertEquals($expected, $actual);        
     }
     
@@ -191,12 +153,27 @@ class MongaTest extends BaseTest
                 ),
             ),
         ));        
-        $query = $this->exportAndApplyClosureToQuery($original);
         $expected = array(
-                'myfield1' => 'myvalue1',
-                'myfield2' => 'myvalue2',
+            '$and' => array(
+                array(
+                    '$and' => array(
+                        array(
+                            'myfield1' => 'myvalue1',                    
+                        ),
+                    ),
+                ),
+                array(
+                    '$and' => array(
+                        array(
+                            'myfield2' => 'myvalue2',                    
+                        ),
+                    ),
+                ),
+            ),
         );
-        $actual = $query->getWhere();        
+        $result = $this->exporter->export($original);
+        
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'filter');       
         $this->assertEquals($expected, $actual);        
     }
     
@@ -214,13 +191,21 @@ class MongaTest extends BaseTest
                 ),
             ),
         ));        
-        $query = $this->exportAndApplyClosureToQuery($original);
         $expected = array(
-                'myfield' => array(
-                    '$gt' => 'myvalue',
+            '$and' => array(
+                array(
+                    '$and' => array(
+                        array(
+                            'myfield' => array(
+                                '$gt' => 'myvalue',
+                            ),                            
+                        ),
+                    ),
                 ),
+            ),
         );
-        $actual = $query->getWhere();         
+        $result = $this->exporter->export($original);
+        $actual = $this->performDrilldownAssertionsAndReturn($result, 'filter');
         $this->assertEquals($expected, $actual);
     }
 
@@ -234,6 +219,24 @@ class MongaTest extends BaseTest
                 ),
             ),
             
+//            array(
+//                array(
+//                    'myfield' => array(
+//                        '$and' => 'should-be-array',
+//                    ),
+//                ),
+//            ),
+//            
+            array(
+                array(
+                    'myfield' => array(
+                        '$and' => array(
+                            'should-be-array'
+                        ),
+                    ),
+                ),
+            ),
+            
             array(
                 array(
                     'myfield' => array(
@@ -242,7 +245,7 @@ class MongaTest extends BaseTest
                                 // missing value here
                                 'operator' => 'gt',
                             ),
-                        )                        
+                        ),
                     ),
                 ),
             ),
@@ -255,7 +258,7 @@ class MongaTest extends BaseTest
                                 'value' => 'myvalue',
                                 // missing operator here
                             ),
-                        )                        
+                        ),                   
                     ),
                 ),
             ),
@@ -268,7 +271,7 @@ class MongaTest extends BaseTest
                                 'value' => 'myvalue',
                                 'operator' => 'eq',
                             ),
-                        )
+                        ),
                     ),
                 ),
             ),
@@ -285,7 +288,7 @@ class MongaTest extends BaseTest
        $original = array_merge($this->emptyParseResult, array(
             'filter' => $filterContent,
         ));
-        $query = $this->exportAndApplyClosureToQuery($original);        
+       $this->exporter->export($original);
     }
     
     public function testFields()
