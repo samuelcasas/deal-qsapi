@@ -38,3 +38,4 @@ Using Composer, add the following to your project's `composer.json`:
 Usage
 -----
 [For Devs](https://github.com/dwsla/deal-qsapi/wiki/Dev-usage)
+[For Clients](https://github.com/dwsla/deal-qsapi/wiki/Client-usage)
