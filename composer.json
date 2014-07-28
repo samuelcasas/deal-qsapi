@@ -28,5 +28,10 @@
             "Deal\\Tests\\Modules\\Qsapi" : "tests/src"
         }
     },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0.x-dev"
+        }
+    },
     "minimum-stability": "dev"
 }
